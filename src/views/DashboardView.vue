@@ -27,7 +27,7 @@
           </div>
           <div>
             <label for="distance">Distance (km):</label>
-            <input type="number" id="distance" v-model="rideRequest.distance" required />
+            <input type="number" id="distance" step="0.01"  v-model="rideRequest.distance" required />
           </div>
           <div>
             <label for="rideType">Ride Type:</label>
@@ -76,14 +76,29 @@
       </section>
 
       <!-- Driver Tracking Tab -->
-      <section v-if="activeTab === 'Track Driver' && rideStatus === 'confirmed'">
+      <section v-if="activeTab === 'Track Driver' && rideStatus === 'pending'">
         <h2>Track Your Driver</h2>
         <p>Driver is on the way to your location.</p>
-        <div id="map">Map will be displayed here.</div>
+        <table class="bill-table">
+          <thead>
+          <tr>
+            <th>Driver ID</th>
+            <th>Latitude</th>
+            <th>Longtitude</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr>
+            <td>{{ position.driverId }}</td>
+            <td>{{ position.driverLatitude.toFixed(2) }}</td>
+            <td>{{ position.driverLongitude.toFixed(2) }}</td>
+          </tr>
+          </tbody>
+        </table>
       </section>
 
       <!-- Checkout Tab -->
-      <section v-if="activeTab === 'Checkout'">
+      <section v-if="activeTab === 'Checkout' && rideStatus === 'confirmed'">
         <h2>Checkout</h2>
         <div v-if="bill">
           <p>Your ride is complete. Please proceed to checkout.</p>
@@ -130,8 +145,8 @@ export default {
       },
       bills: [],
       bill:{
-
       },
+      position:{},
       rideStatus: "idle", // idle, pending, confirmed, completed
     };
   },
@@ -142,8 +157,11 @@ export default {
       if (tab === 'Bill History') {
         this.fetchBillHistory();
       }
-      if (tab === 'Checkout') {
+      if (tab === 'Checkout' && this.rideStatus === 'confirmed') {
         this.fetchBill();
+      }
+      if (tab === 'Track Driver' && this.rideStatus === 'pending') {
+        this.trackDriver();
       }
     },
     async submitRideRequest() {
@@ -225,6 +243,17 @@ export default {
       } catch (error) {
         console.error('Error fetching bill:', error);
         alert('Failed to fetch bill.'+localStorage.getItem("userId"));
+      }
+    },
+    async trackDriver() {
+      try {
+        const passengerId = localStorage.getItem("userId");
+        const response = await axios.post(`/api/passenger/track-ride/${passengerId}`);
+        this.position = response.data;
+        //alert('Your id:'+localStorage.getItem("userId"));
+      } catch (error) {
+        console.error('Error checking driver:', error);
+        alert('Failed to check driver.'+localStorage.getItem("userId"));
       }
     }
   },
