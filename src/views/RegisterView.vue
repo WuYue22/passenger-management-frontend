@@ -122,6 +122,7 @@ button {
   color: white;
   border: none;
   border-radius: 4px;
+  margin: 5px;
   cursor: pointer;
 }
 

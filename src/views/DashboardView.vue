@@ -40,13 +40,13 @@
           <button type="submit">Submit Request</button>
         </form>
         <!-- 显示请求的基本信息 -->
-        <div v-if="rideStatus === 'pending'">
+        <div v-if="rideStatus === 'pending'||rideStatus==='confirmed'">
           <h3>Ride Request Information</h3>
           <p>Departure: {{ rideRequest.departure }}</p>
           <p>Destination: {{ rideRequest.destination }}</p>
           <p>Distance: {{ rideRequest.distance }} km</p>
           <p>Ride Type: {{ rideRequest.rideType }}</p>
-          <button v-if="rideStatus === 'pending'" @click="waitForRide">Waiting for ride...</button> <!-- 等待按钮 -->
+          <button @click="waitOrConfirm">{{this.buttonText}}</button> <!-- 等待按钮 -->
         </div>
       </section>
 
@@ -130,6 +130,7 @@
 
 <script>
 import axios from "axios";
+import {Stomp} from "@stomp/stompjs";
 
 export default {
   name: "UserDashboard",
@@ -148,6 +149,8 @@ export default {
       },
       position:{},
       rideStatus: "idle", // idle, pending, confirmed, completed
+      buttonText:"Waiting for ride...",
+      requestId:0,
     };
   },
   methods: {
@@ -177,42 +180,66 @@ export default {
         const response = await axios.post('/api/passenger/submit-request', payload);
 
         console.log('Ride request submitted successfully', response.data);
-
+        this.requestId = response.data.rideRequestId;
         this.rideStatus = 'pending';
         // 启动等待后台更新的函数
-        this.waitForRide();
+        //this.waitForRide();
       } catch (error) {
         console.error('Error submitting ride request:', error);
         alert('Failed to submit ride request. UserId:' + localStorage.getItem("userId"));
       }
     },
+    waitOrConfirm(){
+      if (this.rideStatus==='confirmed') {
+        this.confirmRide(); // 如果已接单，执行确认上车逻辑
+      } else {
+        this.waitForRide(); // 如果未接单，提示等待接单
+      }
+    },
     //从后端获取请求的状态变化，并根据状态更新按钮
     async waitForRide() {
       try {
-        const passengerId = localStorage.getItem("userId");
-        const response = await axios.get(`/api/passenger/ride-status/${passengerId}`);
+        //const passengerId = localStorage.getItem("userId");
+        const response = await axios.get('/api/passenger/notifyPassenger/'+this.requestId);
         const rideData = response.data;
+        //alert(rideData.status);
+        // 创建 WebSocket 连接
+       /* const socket = new WebSocket("/ws");
+        const stompClient = Stomp.over(socket);
+        stompClient.connect({}, () => {
+          console.log("WebSocket connected");
+          // 订阅服务器推送的消息
+          stompClient.subscribe(`/topic/rideStatus/${passengerId}`, (message) => {
+            const data = JSON.parse(message.body);
+            console.log("Received WebSocket message:", data);
 
-        // 后端返回 rideStatus 状态后进行处理
-        this.rideStatus = rideData.status; // 例如 'pending', 'confirmed', 'completed'
-
+            if (data.status === "ACCEPTED") {
+              this.rideStatus = 'confirmed'; // 更新状态
+              this.buttonText = "确认上车"; // 更新按钮文字
+            }
+          },(error) => {
+            console.error("WebSocket connection error:", error); // 错误日志
+          });
+        });
         // 根据状态调整按钮文本和可点击状态
-        if (this.rideStatus === 'confirmed') {
-          console.log('Ride is confirmed, you can now confirm the ride.');
-          // 你可以在这里增加一些额外的逻辑
-        } else if (this.rideStatus === 'completed') {
-          console.log('Ride is completed, proceed to checkout.');
-        } else {
-          console.log('Waiting for ride...');
-        }
       } catch (error) {
         console.error('Error fetching ride status:', error);
+      }*/
+        if (rideData.status === "ACCEPTED") {
+          this.rideStatus = 'confirmed'; // 更新状态
+          this.buttonText = "确认上车"; // 更新按钮文字
+        }
+        else alert(rideData.status);
+      }catch (error) {
+        console.error('Error fetching ride status:', error);
+        alert("Waiting for ride...");
       }
     },
     confirmRide() {
       console.log("Ride Confirmed");
-      this.rideStatus = "confirmed";
-      this.activeTab = 'Track Driver';
+      alert("已确认上车！");
+      //this.rideStatus = "confirmed";
+      //this.activeTab = 'Track Driver';
     },
     formatTimestamp(timestamp) {
       const date = new Date(timestamp);
@@ -221,6 +248,7 @@ export default {
     checkout() {
       console.log("Checked Out");
       this.rideStatus = "idle";
+      this.buttonText = "Waiting for ride...";
       this.activeTab = 'Request Ride';
     },
     // 获取历史账单

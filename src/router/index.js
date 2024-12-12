@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from "vue-router";
 import LoginView from "../views/LoginView.vue";
 import DashboardView from "../views/DashboardView.vue";
-import RegisterView from "@/views/RegisterView.vue"; // 假设有一个信息界面
+import RegisterView from "@/views/RegisterView.vue";
 
 const routes = [
   { path: "/", component: RegisterView },
