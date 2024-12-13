@@ -6,7 +6,7 @@ import axios from "axios";
 
 //createApp(App).use(store).use(router).mount('#app')
 
-axios.defaults.baseURL = "http://localhost:8081"; // 替换为后端服务的实际地址
+axios.defaults.baseURL = "http://localhost:9999"; // 替换为后端服务的实际地址
 
 const app = createApp(App);
 app.use(store).use(router).mount('#app');
