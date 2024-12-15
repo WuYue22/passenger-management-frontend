@@ -1,5 +1,6 @@
 <template>
   <div class="dashboard">
+    <button class="logout-btn" @click="logout">退出登录</button>
     <h1>User Dashboard</h1>
 
     <div class="tabs">
@@ -283,6 +284,10 @@ export default {
         console.error('Error checking driver:', error);
         alert('Failed to check driver.'+localStorage.getItem("userId"));
       }
+    },
+    logout() {
+      // 清除登录状态并跳转到注册视图
+      this.$router.push('../'); // 跳转到注册页面
     }
   },
 };
@@ -368,5 +373,20 @@ button:hover {
 
 .bill-table tr:hover {
   background-color: #f1f1f1;
+}
+.logout-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 10px 15px;
+  background-color: #f44;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.logout-btn:hover {
+  background-color: #c33;
 }
 </style>
